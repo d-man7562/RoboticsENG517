@@ -63,12 +63,12 @@ int main()
 	Jointspace j;				// Local variable for kinematic calculations
 	Taskspace t;				// Local variable for kinematic calculations
 
-	int spe = 235;				// Motor speed; should not be higher than 240
-	int i = 1;
-	int out = 0;
 
 // Example; replace it with your own program
 while (1){
+	int spe = 235;				// Motor speed; should not be higher than 240
+	int i = 1;
+	int out = 0;
 	assignParameters(delta.r);
 
 
@@ -79,14 +79,11 @@ while (1){
 		i++;
 	};
 
-	printf("Enter 1000 for reset: ");fflush(stdout);
+	printf("Enter 1000 for reset\nEnter any other integer to continue: ");fflush(stdout);
 	int temp;
 	scanf("%d", &temp);
 	printf("temp = %d\n",temp);
-	if (temp != 1000){
-	printf("Good bye.\n");
-		exit(1);}
-
+	if (temp == 1000){
     for (int k=1;k<8;k++){
     	delta.r[k] = -delta.r[k];
     };
@@ -98,6 +95,9 @@ while (1){
     		fflush(stdout);
     		i++;
     	};
+	i=1;
+	}else
+		fflush(stdin);
 
 
 	t.x = 20; // Taskspace data to be passed in by value
