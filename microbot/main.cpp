@@ -1,5 +1,61 @@
 #include "kinematics.h"
 
+void assignParameters(int r[7]) { // r[1..7]
+    char line[256];
+    int j = 1;
+
+    printf("Enter value for delta 1-7, delimited by commas, 0 for no joint movement. ENTER NOTHING to exit:\n");
+    fflush(stdout);
+
+    if (!fgets(line, sizeof(line), stdin)) {
+        printf("No input detected, quitting.\n");
+        exit(1);
+    }
+
+    // check for empty line
+    if (line[0] == '\n') {
+    	printf("Good bye.\n");
+        exit(1);
+    }
+
+    char *token = strtok(line, ",");
+    while (token != NULL && j <= 7) {
+        // skip leading/trailing whitespace
+        while (*token == ' ' || *token == '\t') token++;
+
+        int value;
+        char *endptr;
+
+        if (token[0] == '\0' || token[0] == ',') {
+            // empty token -> assign 0
+            value = 0;
+
+        }
+        else {
+            value = strtol(token, &endptr, 10);
+
+            // check for invalid input
+            if (*endptr != '\0' && *endptr != '\n' && *endptr != ' ' && *endptr != '\t') {
+                printf("Non-integer input detected, quitting.\n");
+                exit(1);
+            }
+            if (*endptr == token[0]) value = 0;
+        }
+
+        r[j++] = value;
+        token = strtok(NULL, ",");
+    }
+
+    // Fill remaining indices with 0 if fewer than 7 tokens
+    while (j <= 7) r[j++] = 0;
+
+    // Print array for verification
+    printf("Values entered:\n");
+    for (int i = 1; i <= 7; i++) {
+        printf("%d ", r[i]);
+    }
+    printf("\n");
+}
 int main()
 {
 	Microbot robot;				// Local variable of the microbot class
@@ -12,33 +68,37 @@ int main()
 	int out = 0;
 
 // Example; replace it with your own program
+while (1){
+	assignParameters(delta.r);
 
-	delta.r[7] = 0;				// Assign number of steps for each motor
-	delta.r[6] = 0;
-	delta.r[5] = 0;
-	delta.r[4] = 0;
-	delta.r[3] = 0;
-	delta.r[2] = 0;
-	delta.r[1] = -200;
-	int temp;
-	for (int j = 1; j<8; j++){
-		printf("Enter value for delta %d\n",j);
-		scanf("%d", &temp);
-		fflush(stdout);
-		delta.r[j] = temp;
-	}
 
-	while(i<6) {
+	while(i<=7) {
 		out = robot.SendStep(spe, delta);	// Send instruction to the microbot
 		printf("i= %d, out= %d\n", i, out);
 		fflush(stdout);
 		i++;
 	};
 
-	printf("Enter 1000 for delta: ");fflush(stdout);
-	scanf("%d", &delta.r[1]);
+	printf("Enter 1000 for reset: ");fflush(stdout);
+	int temp;
+	scanf("%d", &temp);
+	printf("temp = %d\n",temp);
+	if (temp != 1000){
+	printf("Good bye.\n");
+		exit(1);}
 
-	robot.SendStep(spe, delta);
+    for (int k=1;k<8;k++){
+    	delta.r[k] = -delta.r[k];
+    };
+	i=1;
+	while(i<=7) {
+//-10,-10,-10,-10,-10,-10,-10
+    		out = robot.SendStep(spe, delta);	// Send instruction to the microbot
+    		printf("i= %d, out= %d\n", i, out);
+    		fflush(stdout);
+    		i++;
+    	};
+
 
 	t.x = 20; // Taskspace data to be passed in by value
 
@@ -52,7 +112,7 @@ int main()
 
 	delta.r[1] = BASE_STEPS * j.t[1];
 
-	printf("Done, hit Enter to exit: ");fflush(stdout);
-	getchar();
-	printf("Good bye.\n");
-}
+//	printf("Done, hit Enter to exit: ");fflush(stdout);
+//	getchar();
+
+}}
