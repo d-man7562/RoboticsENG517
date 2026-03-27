@@ -46,35 +46,38 @@ int main() {
     robot.InverseKinematics(currentTask, currentJoints);
 
     while(1) {
-        // STEP 2: Prompt User (Use %lf for doubles!)
-        printf("\nCurrent Pos: X:%.1f Y:%.1f Z:%.1f P:%.1f R:%.1f\n", currentTask.x, currentTask.y, currentTask.z,currentTask.p,currentTask.r);
-        printf("Enter target X Y Z P R (Enter 0 0 0 0 0 to quit): ");
-        fflush(stdout);
-        if (scanf("%lf %lf %lf %lf %lf", &nextTask.x, &nextTask.y, &nextTask.z, &nextTask.p, &nextTask.r) != 5) break;
-        if (nextTask.x == 0) break;
+    	// --- STEP 2: Display Current State (Both mm and Degrees) ---
+    	        printf("\n==================================================");
+    	        printf("\nCURRENT POSITION (mm):  X:%.1f Y:%.1f Z:%.1f P:%.1f",
+    	                currentTask.x, currentTask.y, currentTask.z, currentTask.p);
 
-        // STEP 3: Run IK for the target configuration
-        if (robot.InverseKinematics(nextTask, nextJoints) == 0) {
-        	printf("Coordinates out of bounds\n");
-        	continue;
-        }
+    	        printf("\nCURRENT JOINTS (deg): J1:%.2f J2:%.2f J3:%.2f J4:%.2f",
+    	                currentJoints.t[0] * (180.0/PI), currentJoints.t[1] * (180.0/PI),
+    	                currentJoints.t[2] * (180.0/PI), currentJoints.t[3] * (180.0/PI));
+    	        printf("\n==================================================\n");
 
-        // STEP 4: Calculate Steps and Send to Robot
-        robot.MoveTo(nextJoints, currentJoints, delta);
+    	        printf("Enter target X Y Z P R: ");
+    	        fflush(stdout);
 
-        // Physically move the motors using the calculated delta
-        robot.SendStep(speed, delta);
+    	        if (scanf("%lf %lf %lf %lf %lf", &nextTask.x, &nextTask.y, &nextTask.z, &nextTask.p, &nextTask.r) != 5) break;
+    	        if (nextTask.x == 0) break;
 
-        // STEP 5: Update current state
-        // Use the truncated joint angles (already updated inside MoveTo)
-        // to find the actual taskspace position
-        currentJoints = nextJoints;
-        robot.ForwardKinematics(currentJoints, currentTask);
+    	        // --- STEP 3: IK ---
+    	        if (robot.InverseKinematics(nextTask, nextJoints) == 0) {
+    	            // Note: If this fails, currentJoints and currentTask remain UNCHANGED.
+    	            // This prevents the "desync" where the code thinks it moved but didn't.
+    	            printf(">> ERROR: Target unreachable. Staying at current position.\n");
+    	            continue;
+    	        }
 
-        printf("Move Complete. Actual X:%.2f Y:%.2f Z:%.2f\n", currentTask.x, currentTask.y, currentTask.z);
-    }
+    	        // --- STEP 4 & 5: Move and Update ---
+    	        robot.MoveTo(nextJoints, currentJoints, delta); // nextJoints gets truncated here
+    	        robot.SendStep(speed, delta);
 
-    return 0;
-}
+    	        currentJoints = nextJoints; // Now accurately updated with truncated angles
+    	        robot.ForwardKinematics(currentJoints, currentTask);
+
+    	        printf(">> Move Complete.\n");
+    	    }}
 
 

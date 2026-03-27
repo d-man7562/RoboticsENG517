@@ -11,7 +11,7 @@ int Microbot::InverseKinematics(Taskspace t, Jointspace &j){
 //		    const double d = 80;   // d5 [cite: 4]
 	    // 1. Orientation and Base Angle
 	    // Convert Taskspace degrees to Radians [cite: 25, 26, 37]
-	    double p_rad = t.p * (PI / 180.0);
+	    double p_rad = (t.p) * (PI / 180.0);
 	    double r_rad = t.r * (PI / 180.0);
 
 	    j.t[4] = r_rad; // theta_5 = r [cite: 25]
@@ -54,39 +54,25 @@ int Microbot::InverseKinematics(Taskspace t, Jointspace &j){
 
 	    // --- BOUNDS CHECKING (Page 189) ---
 	        // Convert current radians to degrees for easy checking
-	        double j0 = j.t[0] * (180.0 / PI); //base
-	        double j1 = j.t[1] * (180.0 / PI); //shlder
-	        double j2 = j.t[2] * (180.0 / PI); //elbow
-	        double j3 = j.t[3] * (180.0 / PI); //wrist pitch J4
-	        double j4 = j.t[4] * (180.0 / PI); //wrist roll J5
-	        // 1. Base: +/- 90
-	        if (j0 < -90 || j0 > 90){
-	        	printf("fail j0\n");
-	        	return 0;}
+	    // Check for "Imaginary" math (Reach too far)
+	   	if (std::isnan(j.t[1]) || std::isnan(j.t[2])) return 0;
 
-	        // 2. Shoulder: +144 to -35
-	        if (j1 < -35 || j1 > 144){
-	        	printf("fail j1\n");
-	        	return 0;}
+	   	double j0 = j.t[0] * (180.0 / PI); // Base
+	    double j1 = j.t[1] * (180.0 / PI); // Shoulder
+	    double j2 = j.t[2] * (180.0 / PI); // Elbow
+	    double j3 = j.t[3] * (180.0 / PI); // Wrist Pitch
+	    double j4 = j.t[4] * (180.0 / PI); // Wrist Roll
 
-	        // 3. Elbow: 0 to -149 (Note: Your elbow moves in negative degrees)
-	        if (j2 < -149 || j2 > 0){
-	        	printf("fail j2\n");
-	        	return 0;}
 
-	        // 4. Wrist Pitch: +/- 90 (This was j4 in your code, should be j3)
-	        if (j3 < -90.5 || j3 > 90.5) {
-	            printf("fail j3: Actual calculated angle was %.4f\n", j3);
-	            return 0;
-	        }
+	    	printf("%lf\n%lf\n%lf\n%lf\n%lf\n",j0,j1,j2,j3,j4);
 
-	        // 5. Wrist Roll: +/- 270 (This was j3 in your code, should be j4)
-	        if (j4 < -270 || j4 > 270){
-	        	printf("fail j4\n");
-	        	return 0;}
+	    if (j0 < -90.5  || j0 > 90.5)  { printf("fail j0: %.2f\n", j0); return 0; }
+	    if (j1 < -35.5  || j1 > 144.5) { printf("fail j1: %.2f\n", j1); return 0; }
+	    if (j2 < -149.5 || j2 > 0.5)   { printf("fail j2: %.2f\n", j2); return 0; }
+	    if (j3 < -90.5  || j3 > 90.5)  { printf("fail j3: %.2f\n", j3); return 0; } // Buffering the fail point
+	    if (j4 < -270.5 || j4 > 270.5) { printf("fail j4: %.2f\n", j4); return 0; }
 
-	        // Check for "Imaginary" math (Reach too far)
-	        if (std::isnan(j.t[1]) || std::isnan(j.t[2])) return 0;
+
 
 	        return 1; // Success
 
@@ -133,32 +119,32 @@ int Microbot::ForwardKinematics(Jointspace j, Taskspace &t){
 
 
 int Microbot::MoveTo(Jointspace nextJ, Jointspace &currentJ, Registerspace &delta) {
-	// Page 189 Step Ratios
+	// Step Ratios (Steps per Radian)
 	    const double k[5] = {
 	        7072.0 / (2.0 * PI), // Base
 	        7072.0 / (2.0 * PI), // Shoulder
 	        4158.0 / (2.0 * PI), // Elbow
-	        1536.0 / (2.0 * PI), // Right Wrist
-	        1536.0 / (2.0 * PI)  // Left Wrist
+	        1536.0 / (2.0 * PI), // Wrist Pitch
+	        1536.0 / (2.0 * PI)  // Wrist Roll
 	    };
 
-	    int nextSteps[5], currentSteps[5];
-
 	    for(int i = 0; i < 5; i++) {
-	        nextSteps[i] = (int)(nextJ.t[i] * k[i]);
-	        currentSteps[i] = (int)(currentJ.t[i] * k[i]);
+	        // 1. Calculate Absolute Steps as INTEGERS (Truncation happens here)
+	        int nextStepsAtTarget = (int)(nextJ.t[i] * k[i]);
+	        int currentStepsAtStart = (int)(currentJ.t[i] * k[i]);
 
-	        // Calculate relative steps for the motor (Registerspace is 1-indexed)
-	        delta.r[i+1] = nextSteps[i] - currentSteps[i];
+	        // 2. Calculate the Relative Delta for the Registerspace (1-indexed)
+	        delta.r[i+1] = nextStepsAtTarget - currentStepsAtStart;
 
-	        // TRUNCATION: Update nextJ with the actual angle achieved by integer steps
-	        nextJ.t[i] = (double)nextSteps[i] / k[i];
+	        // 3. ACCOUNT FOR TRUNCATION:
+	        // Update the Jointspace variable with the REAL angle the motor reached.
+	        // (Integer Steps / Steps-per-Radian = Actual Radians)
+	        nextJ.t[i] = (double)nextStepsAtTarget / k[i];
 	    }
 
-	    // Indices 6 and 7 are usually for the gripper or unused
-	    delta.r[6] = 0;
+	    delta.r[6] = 0; // Gripper
 	    delta.r[7] = 0;
 
 	    return 1;
-}
+	}
 
