@@ -29,22 +29,27 @@
 #define RIGHT_STEPS 1536
 #define LEFT_STEPS 1536
 #define GRIPPER_STEPS 375
+// Length variables
 
 constexpr double PI = acos(-1);
 
+
 // Public Data Structures
 	struct Taskspace
-	{
+	{	//point that represents "where you are" in the taskspace
 		double x,y,z,p,r,g;
 	};
 
 	struct Jointspace
-	{
+	{	//point res[resemting where you are in the "jointspace" (angles)
+		//IKTaskspcae returns jointspace
+		//FK takes jointspace returns taskspace
 		double t[7];
 	};
 
 	struct Registerspace
-	{
+	{ //rounded from jointspace angles
+		//used for submitting moves
 		int r[9];
 	};
 
@@ -62,7 +67,7 @@ public:
 	// to be written in kinematics.cpp
 	int InverseKinematics(Taskspace t, Jointspace &j);
 	int ForwardKinematics(Jointspace j, Taskspace &t);
-	int MoveTo(Taskspace &t);
+	int MoveTo(Jointspace nextJ, Jointspace &currentJ, Registerspace &delta);
 	
 	// written in interface.cpp
 	int SendStep(int speed, Registerspace delta);

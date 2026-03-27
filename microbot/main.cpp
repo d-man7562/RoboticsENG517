@@ -1,118 +1,80 @@
 #include "kinematics.h"
 
-void assignParameters(int r[7]) { // r[1..7]
-    char line[256];
-    int j = 1;
 
-    printf("Enter value for delta 1-7, delimited by commas, 0 for no joint movement. ENTER NOTHING to exit:\n");
-    fflush(stdout);
+void testKinematics(Microbot &robot) {
+    Jointspace inputJoints, outputJoints;
+    Taskspace targetTask;
 
-    if (!fgets(line, sizeof(line), stdin)) {
-        printf("No input detected, quitting.\n");
-        exit(1);
+    // 1. Setup Test Case (Angles in Radians for the functions)
+    inputJoints.t[0] = 15.0 * (PI / 180.0);
+    inputJoints.t[1] = 20.0 * (PI / 180.0);
+    inputJoints.t[2] = -30.0 * (PI / 180.0);
+    inputJoints.t[3] = 10.0 * (PI / 180.0);
+    inputJoints.t[4] = 90.0 * (PI / 180.0);
+
+    // 2. Run Forward Kinematics
+    robot.ForwardKinematics(inputJoints, targetTask);
+
+    printf("FK Results:\n");
+    printf("X: %.3f (Expected: 330.89)\n", targetTask.x);
+    printf("Y: %.3f (Expected: 88.66)\n", targetTask.y);
+    printf("Z: %.3f (Expected: 201.97)\n", targetTask.z);
+
+    // 3. Run Inverse Kinematics using the FK output
+    robot.InverseKinematics(targetTask, outputJoints);
+
+    printf("\nIK Results (Back to Degrees):\n");
+    for(int i=0; i<5; i++) {
+        printf("Joint %d: %.2f deg (Expected matches input)\n",
+                i+1, outputJoints.t[i] * (180.0 / PI));
     }
-
-    // check for empty line
-    if (line[0] == '\n') {
-    	printf("Good bye.\n");
-        exit(1);
-    }
-
-    char *token = strtok(line, ",");
-    while (token != NULL && j <= 7) {
-        // skip leading/trailing whitespace
-        while (*token == ' ' || *token == '\t') token++;
-
-        int value;
-        char *endptr;
-
-        if (token[0] == '\0' || token[0] == ',') {
-            // empty token -> assign 0
-            value = 0;
-
-        }
-        else {
-            value = strtol(token, &endptr, 10);
-
-            // check for invalid input
-            if (*endptr != '\0' && *endptr != '\n' && *endptr != ' ' && *endptr != '\t') {
-                printf("Non-integer input detected, quitting.\n");
-                exit(1);
-            }
-            if (*endptr == token[0]) value = 0;
-        }
-
-        r[j++] = value;
-        token = strtok(NULL, ",");
-    }
-
-    // Fill remaining indices with 0 if fewer than 7 tokens
-    while (j <= 7) r[j++] = 0;
-
-    // Print array for verification
-    printf("Values entered:\n");
-    for (int i = 1; i <= 7; i++) {
-        printf("%d ", r[i]);
-    }
-    printf("\n");
 }
-int main()
-{
-	Microbot robot;				// Local variable of the microbot class
-	Registerspace delta;		// Local variable for input of motor steps
-	Jointspace j;				// Local variable for kinematic calculations
-	Taskspace t;				// Local variable for kinematic calculations
 
 
-// Example; replace it with your own program
-while (1){
-	int spe = 235;				// Motor speed; should not be higher than 240
-	int i = 1;
-	int out = 0;
-	assignParameters(delta.r);
+int main() {
+    Microbot robot;
+    Jointspace currentJoints, nextJoints;
+    Taskspace currentTask, nextTask;
+    Registerspace delta;
+    int speed = 235; // Recommended speed from your manual
+
+    // STEP 1: Initialize at Home (Manual Page 181)
+    currentTask.x = 125.0; currentTask.y = 0.0; currentTask.z = 20.0;
+    currentTask.p = -90.0; currentTask.r = 0.0;
+
+    // Convert home position to joints to establish our starting "zero"
+    robot.InverseKinematics(currentTask, currentJoints);
+
+    while(1) {
+        // STEP 2: Prompt User (Use %lf for doubles!)
+        printf("\nCurrent Pos: X:%.1f Y:%.1f Z:%.1f P:%.1f R:%.1f\n", currentTask.x, currentTask.y, currentTask.z,currentTask.p,currentTask.r);
+        printf("Enter target X Y Z P R (Enter 0 0 0 0 0 to quit): ");
+        fflush(stdout);
+        if (scanf("%lf %lf %lf %lf %lf", &nextTask.x, &nextTask.y, &nextTask.z, &nextTask.p, &nextTask.r) != 5) break;
+        if (nextTask.x == 0) break;
+
+        // STEP 3: Run IK for the target configuration
+        if (robot.InverseKinematics(nextTask, nextJoints) == 0) {
+        	printf("Coordinates out of bounds\n");
+        	continue;
+        }
+
+        // STEP 4: Calculate Steps and Send to Robot
+        robot.MoveTo(nextJoints, currentJoints, delta);
+
+        // Physically move the motors using the calculated delta
+        robot.SendStep(speed, delta);
+
+        // STEP 5: Update current state
+        // Use the truncated joint angles (already updated inside MoveTo)
+        // to find the actual taskspace position
+        currentJoints = nextJoints;
+        robot.ForwardKinematics(currentJoints, currentTask);
+
+        printf("Move Complete. Actual X:%.2f Y:%.2f Z:%.2f\n", currentTask.x, currentTask.y, currentTask.z);
+    }
+
+    return 0;
+}
 
 
-	while(i<=7) {
-		out = robot.SendStep(spe, delta);	// Send instruction to the microbot
-		printf("i= %d, out= %d\n", i, out);
-		fflush(stdout);
-		i++;
-	};
-
-	printf("Enter 1000 for reset\nEnter any other integer to continue: ");fflush(stdout);
-	int temp;
-	scanf("%d", &temp);
-	printf("temp = %d\n",temp);
-	if (temp == 1000){
-    for (int k=1;k<8;k++){
-    	delta.r[k] = -delta.r[k];
-    };
-	i=1;
-	while(i<=7) {
-//-10,-10,-10,-10,-10,-10,-10
-    		out = robot.SendStep(spe, delta);	// Send instruction to the microbot
-    		printf("i= %d, out= %d\n", i, out);
-    		fflush(stdout);
-    		i++;
-    	};
-	i=1;
-	}else
-		fflush(stdin);
-
-
-	t.x = 20; // Taskspace data to be passed in by value
-
-	printf("Input to InverseKinematics: t.x= %f\n", t.x); // Shows how to display a structured variable
-	fflush(stdout);
-
-	out = robot.InverseKinematics(t,j); // Jointspace data retrieved by reference
-
-	printf("Output from InverseKinematics: j.t[1]= %f, return= %d\n", j.t[1], out);
-	fflush(stdout);
-
-	delta.r[1] = BASE_STEPS * j.t[1];
-
-//	printf("Done, hit Enter to exit: ");fflush(stdout);
-//	getchar();
-
-}}
