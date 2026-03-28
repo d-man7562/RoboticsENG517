@@ -51,28 +51,30 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 
 
 	    printf("Inside Inverse Kinematics\n");
-	    printf("T1:%f degrees: %f\n",theta1,theta1* (PI / 180.0));
-	    printf("T2:%f degrees: %f\n",theta2,theta2* (PI / 180.0));
-	    printf("T3:%f degrees: %f\n",theta3,theta3* (PI / 180.0));
-	    printf("T4:%f degrees: %f\n",theta4,theta4* (PI / 180.0));
-	    printf("T5:%f degrees: %f\n",theta5,theta5* (PI / 180.0));
-		js.t[0] = theta1;
-	    js.t[1] = theta2;
-	    js.t[2] = theta3;
-	    js.t[3] = theta4;
-	    js.t[4] = theta5;
-	    js.t[5] = theta6;
+	    printf("T1:%.2f degrees: %.2f\n",theta1,theta1* (180.0/ PI));
+	    printf("T2:%.2f degrees: %.2f\n",theta2,theta2* (180.0/ PI));
+	    printf("T3:%.2f degrees: %.2f\n",theta3,theta3* (180.0/ PI));
+	    printf("T4:%.2f degrees: %.2f\n",theta4,theta4* (180.0/ PI));
+	    printf("T5:%.2f degrees: %.2f\n",theta5,theta5* (180.0/ PI ));
+	    printf("T6:%.2f degrees: %.2f\n",theta6,theta6* (180.0/ PI ));
+		js.t[0] = theta1 * (180.0/ PI);
+	    js.t[1] = theta2* (180.0/ PI);
+	    js.t[2] = theta3* (180.0/ PI);
+	    js.t[3] = theta4* (180.0/ PI);
+	    js.t[4] = theta5* (180.0/ PI);
+	    js.t[5] = theta6* (180.0/ PI);
 	    return 1;
 }
-
+//must accept radians
 int Microbot::ForwardKinematics(Jointspace j, Taskspace &t){
 	// write your forward kinematics here
 	//theta values from jointspace
-	double t1 = j.t[0];
-	double t2 = j.t[1];
-	double t3 = j.t[2];
-	double t4 = j.t[3];
-	double t5 = j.t[4];
+	//convert angles into radians
+	double t1 = j.t[0] * (PI / 180.0);
+	double t2 = j.t[1] * (PI / 180.0);
+	double t3 = j.t[2] * (PI / 180.0);
+	double t4 = j.t[3] * (PI / 180.0);
+	double t5 = j.t[4]  * (PI / 180.0);
 
 //	double d1 = 195.072;//mm, 7.68 inches;  BASE SEGMENT LENGTH
 //	double a2 = 177.8;//mm, 7.0 inches;		LINK 1 LENGTH
@@ -101,6 +103,13 @@ int Microbot::ForwardKinematics(Jointspace j, Taskspace &t){
 	t.p = p;
 	t.r = r;
 	t.g = j.t[5];
+		printf("Inside Forward Kinematics:\n");
+		printf("X: %.3f \n", t.x);
+	    printf("Y: %.3f \n", t.y);
+	    printf("Z: %.3f \n", t.z);
+	    printf("P: degrees: %.3f rads: %.2f\n", t.p, t.p* (PI/180.0));
+	    printf("R: degrees: %.3f rads: %.2f \n", t.r, t.r* (PI/180.0));
+	    printf("G: degrees: %.3f rads: %.2f \n", t.g, t.g* (PI/180.0));
 	return 1;
 }
 

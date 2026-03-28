@@ -2,37 +2,38 @@
 
 
 void testKinematics(Microbot &robot) {
-    Jointspace inputJoints, outputJoints;
-    Taskspace targetTask;
+    Jointspace in, o;
+    Taskspace t;
 
     // 1. Setup Test Case (Angles in Radians for the functions)
-    inputJoints.t[0] = 15.0 * (PI / 180.0);
-    inputJoints.t[1] = 20.0 * (PI / 180.0);
-    inputJoints.t[2] = -30.0 * (PI / 180.0);
-    inputJoints.t[3] = 10.0 * (PI / 180.0);
-    inputJoints.t[4] = 90.0 * (PI / 180.0);
+    //NEED TO INPUT RADIANS INTO FK
+    in.t[0] = 15.0;
+    in.t[1] = 20.0;
+    in.t[2] = -30.0;
+    in.t[3] = 10.0;
+    in.t[4] = 90.0;
     printf("=====TEST KINEMNATICS=============\n");
-    for (int i=0; i<5;i++){
-    	printf("Input angles for joint %d in degrees: %.2f rads: %.2f\n",i+1,inputJoints.t[i]*(180/PI),inputJoints.t[i]);
+    for (int i=0; i<6;i++){
+    	printf("Input angles for joint %d in degrees: %.2f rads: %.2f\n",i+1,in.t[i],in.t[i]*(PI/180.0));
     }
     // 2. Run Forward Kinematics
-    robot.ForwardKinematics(inputJoints, targetTask);
+    robot.ForwardKinematics(in, t);
     printf("FK Results:\n");
-    printf("X: %.3f (Expected: 330.89)\n", targetTask.x);
-    printf("Y: %.3f (Expected: 88.66)\n", targetTask.y);
-    printf("Z: %.3f (Expected: 201.97)\n", targetTask.z);
-    printf("P: degrees: %.3f rads: %.2f (Expected: -90)\n", targetTask.p, targetTask.p* (PI/180.0));
-    printf("R: degrees: %.3f rads: %.2f (Expected: 90)\n", targetTask.r, targetTask.r* (PI/180.0));
-    printf("G: degrees: %.3f rads: %.2f (Expected: g/no change)\n", targetTask.g, targetTask.g* (PI/180.0));
+    printf("X: (Expected: 330.89)\n");
+    printf("Y: (Expected: 88.66)\n");
+    printf("Z:  (Expected: 201.97)\n");
+    printf("P: (Expected: -90)\n");
+    printf("R: (Expected: 90)\n");
+    printf("G: (Expected: g/no change)\n");
     // 3. Run Inverse Kinematics using the FK output
-    robot.InverseKinematics(targetTask, outputJoints);
+    robot.InverseKinematics(t, o);
 
     printf("\nIK Results (Back to Degrees):\n");
-    for(int i=0; i<4; i++) {
-        printf("Joint %d: %.2f deg (Expected matches input %.2f)\n",i+1, outputJoints.t[i] * (180.0 / PI), inputJoints.t[i] *( 180.0/PI));
+    for(int i=0; i<5; i++) {
+        printf("Joint %d: %.2f rads %.2f (Expected matches input %f )\n",i+1, o.t[i],o.t[i] * (PI/180.0), in.t[i]);
 
     }
-    printf("Joint 5: %.2f deg (Expected matches input %.2f)\n",outputJoints.t[4],inputJoints.t[4]*(180/PI));
+    printf("Joint 6: %.2f rads %.2f (Expected matches input %f)\n",o.t[5],o.t[5]* (PI/180.0),in.t[5]);
     printf("=====END TEST KINEMNATICS=============\n");
 }
 
