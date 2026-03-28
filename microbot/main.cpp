@@ -19,7 +19,9 @@ void testKinematics(Microbot &robot) {
     printf("X: %.3f (Expected: 330.89)\n", targetTask.x);
     printf("Y: %.3f (Expected: 88.66)\n", targetTask.y);
     printf("Z: %.3f (Expected: 201.97)\n", targetTask.z);
-
+    printf("Z: %.3f (Expected: -90)\n", targetTask.p);
+    printf("Z: %.3f (Expected: 90)\n", targetTask.r);
+    printf("Z: %.3f (Expected: g/no change)\n", targetTask.g);
     // 3. Run Inverse Kinematics using the FK output
     robot.InverseKinematics(targetTask, outputJoints);
 
@@ -37,7 +39,7 @@ int main() {
     Taskspace currentTask, nextTask;
     Registerspace delta;
     int speed = 235; // Recommended speed from your manual
-
+    testKinematics(robot);
     // STEP 1: Initialize at Home (Manual Page 181)
     currentTask.x = 125.0; currentTask.y = 0.0; currentTask.z = 20.0;
     currentTask.p = -90.0; currentTask.r = 0.0;

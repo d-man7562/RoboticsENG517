@@ -27,14 +27,14 @@ int Microbot::ForwardKinematics(Jointspace j, Taskspace &t){
 	double t4 = j.t[3];
 	double t5 = j.t[4];
 
-	double d1 = 195.072;//mm, 7.68 inches;  BASE SEGMENT LENGTH
-	double a2 = 177.8;//mm, 7.0 inches;		LINK 1 LENGTH
-	double a3 = 177.8; //mm, 7.0 inches; 	LINK 2 LENGTH
-	double d5 = 96.52; //mm, 3.80 inches;	LINK 3 LENGTH
-//    const double d1 = 252; // d1 [cite: 4]
-//    const double a2 = 178;   // a2 = a3 [cite: 4]
-//    const double a3 = 178;   // a2 = a3 [cite: 4]
-//    const double d5 = 80;   // d5 [cite: 4]
+//	double d1 = 195.072;//mm, 7.68 inches;  BASE SEGMENT LENGTH
+//	double a2 = 177.8;//mm, 7.0 inches;		LINK 1 LENGTH
+//	double a3 = 177.8; //mm, 7.0 inches; 	LINK 2 LENGTH
+//	double d5 = 96.52; //mm, 3.80 inches;	LINK 3 LENGTH
+    const double d1 = 252; // d1 [cite: 4]
+    const double a2 = 178;   // a2 = a3 [cite: 4]
+    const double a3 = 178;   // a2 = a3 [cite: 4]
+    const double d5 = 80;   // d5 [cite: 4]
 
 	double c1 = cos(t1), s1 = sin(t1);
 	double c2 = cos(t2), s2 = sin(t2);
