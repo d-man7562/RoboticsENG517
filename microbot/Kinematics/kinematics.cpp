@@ -5,16 +5,63 @@
 //registerspace is used in the step command
 int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	// Constants from your robot and homework solution
-	    const double h = 195.072; // d1 [cite: 4]
-	    const double a = 177.8;   // a2 = a3 [cite: 4]
-	    const double d = 96.52;   // d5 [cite: 4]
+//	    const double h = 195.072; // d1 [cite: 4]
+//	    const double a = 177.8;   // a2 = a3 [cite: 4]
+//	    const double d = 96.52;   // d5 [cite: 4]
+	    const double h = 252; // d1 [cite: 4]
+	    const double a = 178;   // a2 = a3 [cite: 4]
+	    const double d = 80;   // d5 [cite: 4]
 
-	    double s2, c2;
-	    double s3,c3;
+	    double theta1 = atan2(ts.y,ts.x);
+	    double p = ts.p * (PI/180.0);
+	    double theta234 = p + (PI/2.0);
+	    double theta5 = ts.r * (PI / 180.0);
+	    double theta6 = ts.g;
+	    double c1 = cos(theta1), s1 = sin(theta1);
+	    double c234 = cos(theta234), s234 = sin(theta234);
+	    //wrist
+	    double wx = ts.x - d * c1 * s234;
+	    double wy = ts.y - d * s1 * s234;
+	    double wz = ts.z + d * c234;
+	    //wx + wy squared
+	    double r_sq = wx * wx + wy * wy;
+	    double c3 = ((r_sq + pow(wz - h, 2)) / (2.0 * a * a)) - 1.0;
+	    //solve for theta3
+	    //check correctness in lab
+	    if (c3 > 1.0) c3 = 1.0;
+	    else if (c3 < -1.0) c3 = -1.0;
+	    double s3 = -sqrt(1.0 - c3 * c3);
 
-	    double t1 = atan2(ts.y,ts.x);
-	    double t2 = atan2(s2,c2);
-	    double t234 = ts.p+(PI/2);
+	    double theta3 = atan2(s3,c3);
+
+	    //solve for theta2
+	    double common_denom = 2.0 * a * (1.0 + c3);
+	    double sqrt_rxy = sqrt(r_sq);
+	    double c2, s2;
+	    if (wx >= 0) {
+	            c2 = ((wz - h) * s3 + sqrt_rxy * (1.0 + c3)) / common_denom;
+	            s2 = ((wz - h) * (1.0 + c3) - s3 * sqrt_rxy) / common_denom;
+	        } if (wx <= 0){
+	            c2 = ((wz - h) * s3 - sqrt_rxy * (1.0 + c3)) / common_denom;
+	            s2 = ((wz - h) * (1.0 + c3) + s3 * sqrt_rxy) / common_denom;
+	        }
+	    double theta2 = atan2(s2,c2);
+	    //solve for theta4
+	    double theta4 = theta234-theta2-theta3;
+
+
+	    printf("Inside Inverse Kinematics\n");
+	    printf("T1:%f degrees: %f\n",theta1,theta1* (PI / 180.0));
+	    printf("T2:%f degrees: %f\n",theta2,theta2* (PI / 180.0));
+	    printf("T3:%f degrees: %f\n",theta3,theta3* (PI / 180.0));
+	    printf("T4:%f degrees: %f\n",theta4,theta4* (PI / 180.0));
+	    printf("T5:%f degrees: %f\n",theta5,theta5* (PI / 180.0));
+		js.t[0] = theta1;
+	    js.t[1] = theta2;
+	    js.t[2] = theta3;
+	    js.t[3] = theta4;
+	    js.t[4] = theta5;
+	    js.t[5] = theta6;
 	    return 1;
 }
 
@@ -53,7 +100,7 @@ int Microbot::ForwardKinematics(Jointspace j, Taskspace &t){
 	t.z = z;
 	t.p = p;
 	t.r = r;
-
+	t.g = j.t[5];
 	return 1;
 }
 

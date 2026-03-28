@@ -11,25 +11,29 @@ void testKinematics(Microbot &robot) {
     inputJoints.t[2] = -30.0 * (PI / 180.0);
     inputJoints.t[3] = 10.0 * (PI / 180.0);
     inputJoints.t[4] = 90.0 * (PI / 180.0);
-
+    printf("=====TEST KINEMNATICS=============\n");
+    for (int i=0; i<5;i++){
+    	printf("Input angles for joint %d in degrees: %.2f rads: %.2f\n",i+1,inputJoints.t[i]*(180/PI),inputJoints.t[i]);
+    }
     // 2. Run Forward Kinematics
     robot.ForwardKinematics(inputJoints, targetTask);
-
     printf("FK Results:\n");
     printf("X: %.3f (Expected: 330.89)\n", targetTask.x);
     printf("Y: %.3f (Expected: 88.66)\n", targetTask.y);
     printf("Z: %.3f (Expected: 201.97)\n", targetTask.z);
-    printf("Z: %.3f (Expected: -90)\n", targetTask.p);
-    printf("Z: %.3f (Expected: 90)\n", targetTask.r);
-    printf("Z: %.3f (Expected: g/no change)\n", targetTask.g);
+    printf("P: degrees: %.3f rads: %.2f (Expected: -90)\n", targetTask.p, targetTask.p* (PI/180.0));
+    printf("R: degrees: %.3f rads: %.2f (Expected: 90)\n", targetTask.r, targetTask.r* (PI/180.0));
+    printf("G: degrees: %.3f rads: %.2f (Expected: g/no change)\n", targetTask.g, targetTask.g* (PI/180.0));
     // 3. Run Inverse Kinematics using the FK output
     robot.InverseKinematics(targetTask, outputJoints);
 
     printf("\nIK Results (Back to Degrees):\n");
-    for(int i=0; i<5; i++) {
-        printf("Joint %d: %.2f deg (Expected matches input)\n",
-                i+1, outputJoints.t[i] * (180.0 / PI));
+    for(int i=0; i<4; i++) {
+        printf("Joint %d: %.2f deg (Expected matches input %.2f)\n",i+1, outputJoints.t[i] * (180.0 / PI), inputJoints.t[i] *( 180.0/PI));
+
     }
+    printf("Joint 5: %.2f deg (Expected matches input %.2f)\n",outputJoints.t[4],inputJoints.t[4]*(180/PI));
+    printf("=====END TEST KINEMNATICS=============\n");
 }
 
 
