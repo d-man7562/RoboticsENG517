@@ -5,12 +5,25 @@
 //registerspace is used in the step command
 int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	// Constants from your robot and homework solution
-	    const double h = 195.072; // d1 [cite: 4]
-	    const double a = 177.8;   // a2 = a3 [cite: 4]
-	    const double d = 96.52;   // d5 [cite: 4]
-//	    const double h = 252; // d1 [cite: 4]
-//	    const double a = 178;   // a2 = a3 [cite: 4]
-//	    const double d = 80;   // d5 [cite: 4]
+//	    const double h = 195.072; // d1 [cite: 4]
+//	    const double a = 177.8;   // a2 = a3 [cite: 4]
+//	    const double d = 96.52;   // d5 [cite: 4]
+	    const double h = 252; // d1 [cite: 4]
+	    const double a = 178;   // a2 = a3 [cite: 4]
+	    const double d = 80;   // d5 [cite: 4]
+	    if (ts.z < 10.0) { // 10mm safety buffer above the table
+	        printf("Safety Error: Target Z is too low! (Collision Risk): %.2f \n",ts.z);
+	        return 0;
+	    }
+	    // 1. Calculate horizontal distance from center
+	    double dist_2d = sqrt(ts.x * ts.x + ts.y * ts.y);
+
+	    // 2. Minimum Reach Safety Check
+	    // If the target is too close (inside the robot's own body)
+	    if (dist_2d < 100.0 && ts.z < (h + 50)) {
+	        printf("Safety Error: Target is too close to the base (Self-Collision Risk)!\n");
+	        return 0;
+	    }
 	    double dist_to_target = sqrt(pow(ts.x, 2) + pow(ts.y, 2) + pow(ts.z - 195.072, 2));
 
 	        // 2. Max theoretical reach is a2 + a3 + d5
@@ -45,6 +58,16 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	    double wz = ts.z + d * c234;
 	    //wx + wy squared
 	    double r_sq = wx * wx + wy * wy;
+	    double horizontal_dist = sqrt(ts.x * ts.x + ts.y * ts.y);
+	    if (horizontal_dist < 50.0 && ts.z < 100.0) {
+	        printf("Safety Error: Target too close to base (Collision Risk): %.2f\n",horizontal_dist);
+	        return 0;
+	    }
+	    double dist_shoulder_to_wrist_sq = r_sq + pow(wz - h, 2);
+	    if (dist_shoulder_to_wrist_sq > pow(a + a, 2)) {
+	        printf("Safety Error: Target wrist position is physically unreachable!\n");
+	        return 0;
+	    }
 	    double c3 = ((r_sq + pow(wz - h, 2)) / (2.0 * a * a)) - 1.0;
 	    //solve for theta3
 //	    //check correctness in lab
@@ -59,7 +82,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 
 	    double theta3 = atan2(s3,c3);
 
-	    if (theta3 > 0 || theta3 < -2.6005){ //0, -144
+	    if (theta3 > 0 || theta3 <-2.6006){ //0, -144
 	   	     	printf("Theta3 out of bounds: %.2f\n",theta3);
 	   	    	    	return 0;
 	   	    }
@@ -83,7 +106,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 
 	    double theta2 = atan2(s2,c2);
 
-	    if (theta2 > 2.5133 || theta2 < -0.6109){ //144 , -35
+	    if (theta2 > 2.5133 || theta2 < -0.6109){ //144 , -35   .. -.34 used to be  -0.6109
 		   	     	printf("Theta2 out of bounds: %.2f\n",theta2);
 		   	    	    	return 0;
 		   	    }
@@ -123,14 +146,14 @@ int Microbot::ForwardKinematics(Jointspace j, Taskspace &t){
 	double t4 = j.t[3];
 	double t5 = j.t[4] ;
 
-	double d1 = 195.072;//mm, 7.68 inches;  BASE SEGMENT LENGTH
-	double a2 = 177.8;//mm, 7.0 inches;		LINK 1 LENGTH
-	double a3 = 177.8; //mm, 7.0 inches; 	LINK 2 LENGTH
-	double d5 = 96.52; //mm, 3.80 inches;	LINK 3 LENGTH
-//    const double d1 = 252; // d1 [cite: 4]
-//    const double a2 = 178;   // a2 = a3 [cite: 4]
-//    const double a3 = 178;   // a2 = a3 [cite: 4]
-//    const double d5 = 80;   // d5 [cite: 4]
+//	double d1 = 195.072;//mm, 7.68 inches;  BASE SEGMENT LENGTH
+//	double a2 = 177.8;//mm, 7.0 inches;		LINK 1 LENGTH
+//	double a3 = 177.8; //mm, 7.0 inches; 	LINK 2 LENGTH
+//	double d5 = 96.52; //mm, 3.80 inches;	LINK 3 LENGTH
+    const double d1 = 252; // d1 [cite: 4]
+    const double a2 = 178;   // a2 = a3 [cite: 4]
+    const double a3 = 178;   // a2 = a3 [cite: 4]
+    const double d5 = 80;   // d5 [cite: 4]
 
 	double c1 = cos(t1), s1 = sin(t1);
 	double c2 = cos(t2), s2 = sin(t2);
@@ -193,7 +216,7 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 	        }
 
 	        // APPLY SIGN FLIPS HERE based on your hardware testing:
-	            delta.r[1] = (int)(d_theta[0] * -k[0]);  // Base (Check if left/right is correct)
+	            delta.r[1] = (int)(d_theta[0] * k[0]);  // Base (Check if left/right is correct)
 	            delta.r[2] = (int)(d_theta[1] * -k[1]); // Shoulder (Flipped: + angle = Up)
 	            delta.r[3] = (int)(d_theta[2] * -k[2]); // Elbow (Flipped: + angle = Out/Up)
 
@@ -202,8 +225,11 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 	            double roll_steps  = d_theta[4] * k[4];
 
 	            // If Pitch is also inverted, flip the sign of pitch_steps here:
-	            delta.r[4] = (int)(-pitch_steps + roll_steps);
+	            delta.r[4] = (int)(pitch_steps + roll_steps);
+	            delta.r[4] = (int)(pitch_steps);
 	            delta.r[5] = (int)(-pitch_steps - roll_steps);
+	            delta.r[5] = (int)(-pitch_steps );
+
 
 	    return 1;
 }
