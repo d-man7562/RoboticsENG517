@@ -1,6 +1,22 @@
 #include "kinematics.h"
-//Users should be able to input desired taskspace coordinates
 
+void manualJointTest(Microbot &robot, Jointspace &currentJoints) {
+	currentJoints.t[0] = 0 ,currentJoints.t[0] =0 ,currentJoints.t[0] = -90 ,currentJoints.t[0] = 0,currentJoints.t[0] =0;
+    Jointspace targetJoints;
+    Registerspace delta;
+    double deg[5];
+    printf("Enter 5 angles (T1 T2 T3 T4 T5): ");
+    fflush(stdout);
+    if (scanf("%lf %lf %lf %lf %lf", &deg[0], &deg[1], &deg[2], &deg[3], &deg[4]) == 5) {
+        for(int i = 0; i < 5; i++) {
+            targetJoints.t[i] = deg[i] * (PI / 180.0);
+        }
+        robot.MoveTo(targetJoints, currentJoints, delta);
+        robot.SendStep(230, delta);
+        for(int i = 0; i < 5; i++) currentJoints.t[i] = targetJoints.t[i];
+    }
+}
+//Users should be able to input desired taskspace coordinates
 void testKinematics(Microbot &robot) {
     Jointspace in, o;
     Taskspace t;
@@ -51,7 +67,7 @@ int main() {
 
     // Convert home position to joints to establish our starting "zero"
     robot.InverseKinematics(currentTask, currentJoints);
-
+//    manualJointTest(robot,currentJoints);
     while(1) {
         // STEP 2: Prompt User (Use %lf for doubles!)
         printf("\nCurrent Pos: X:%.1f Y:%.1f Z:%.1f P:%.1f R:%.1f\n", currentTask.x, currentTask.y, currentTask.z,currentTask.p,currentTask.r);

@@ -11,11 +11,18 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 //	    const double h = 252; // d1 [cite: 4]
 //	    const double a = 178;   // a2 = a3 [cite: 4]
 //	    const double d = 80;   // d5 [cite: 4]
+	    double dist_to_target = sqrt(pow(ts.x, 2) + pow(ts.y, 2) + pow(ts.z - 195.072, 2));
+
+	        // 2. Max theoretical reach is a2 + a3 + d5
+	        if (dist_to_target > (h+a+d)) {
+	            printf("Safety Error: Target is physically too far away!\n");
+	            return 0; // Return failure to main.cpp
+	        }
 
 	    double theta1 = atan2(ts.y,ts.x);
 
 	    if (theta1 < -(PI/2.0) || theta1 > (PI/2.0)){
-	    	printf("Theta1 out of bounds\n: %.2f",theta1);
+	    	printf("Theta1 out of bounds: %.2f\n",theta1);
 	    	return 0;
 	    }
 
@@ -25,7 +32,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	    double theta5 = ts.r * (PI / 180.0);
 
 	    if (theta5 < -(PI/2.0) || theta5 > (PI/2.0)){
-	     	printf("Theta5 out of bounds\n: %.2f",theta5);
+	     	printf("Theta5 out of bounds: %.2f\n",theta5);
 	    	    	return 0;
 	    }
 
@@ -40,15 +47,20 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	    double r_sq = wx * wx + wy * wy;
 	    double c3 = ((r_sq + pow(wz - h, 2)) / (2.0 * a * a)) - 1.0;
 	    //solve for theta3
-	    //check correctness in lab
-	    if (c3 > 1.0) c3 = 1.0;
-	    else if (c3 < -1.0) c3 = -1.0;
+//	    //check correctness in lab
+//	    if (c3 > 1.0) c3 = 1.0;
+//	    else if (c3 < -1.0) c3 = -1.0;
+	    if (c3 > 1.0 || c3 < -1.0) {
+	            printf("Math Error: Target point results in impossible joint geometry.\n");
+	            return 0;
+	        }
+
 	    double s3 = -sqrt(1.0 - c3 * c3);
 
 	    double theta3 = atan2(s3,c3);
 
 	    if (theta3 > 0 || theta3 < -2.6005){ //0, -144
-	   	     	printf("Theta3 out of bounds\n: %.2f",theta3);
+	   	     	printf("Theta3 out of bounds: %.2f\n",theta3);
 	   	    	    	return 0;
 	   	    }
 
@@ -72,7 +84,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	    double theta2 = atan2(s2,c2);
 
 	    if (theta2 > 2.5133 || theta2 < -0.6109){ //144 , -35
-		   	     	printf("Theta2 out of bounds\n: %.2f",theta2);
+		   	     	printf("Theta2 out of bounds: %.2f\n",theta2);
 		   	    	    	return 0;
 		   	    }
 
@@ -81,7 +93,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	    double theta4 = theta234-theta2-theta3;
 
 	    if (theta4 > 4.7124 || theta4 < -4.7124){ // 270 deg
-		   	     	printf("Theta4 out of bounds\n: %.2f",theta4);
+		   	     	printf("Theta4 out of bounds: %.2f\n",theta4);
 		   	    	    	return 0;
 		   	    }
 
@@ -151,7 +163,7 @@ int Microbot::ForwardKinematics(Jointspace j, Taskspace &t){
 
 int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta) {
 
-
+	memset(delta.r, 0, sizeof(delta.r));
 	//1. we start at a position in task space
 	//2. we get a new task space to move to
 	//3. check if  valid joint POS using IK
@@ -174,22 +186,24 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 	        244.4// Left Wrist
 	    };
 
-	    int nextSteps[5], currentSteps[5];
 
-	    for(int i = 0; i < 5; i++) {
-	        nextSteps[i] = (int)(nextJ.t[i] * k[i]);
-	        currentSteps[i] = (int)(currentJ.t[i] * k[i]);
+	    double d_theta[5];
+	        for(int i = 0; i < 5; i++) {
+	            d_theta[i] = nextJ.t[i] - currentJ.t[i];
+	        }
 
-	        // Calculate relative steps for the motor (Registerspace is 1-indexed)
-	        delta.r[i+1] = nextSteps[i] - currentSteps[i];
+	        // APPLY SIGN FLIPS HERE based on your hardware testing:
+	            delta.r[1] = (int)(d_theta[0] * -k[0]);  // Base (Check if left/right is correct)
+	            delta.r[2] = (int)(d_theta[1] * -k[1]); // Shoulder (Flipped: + angle = Up)
+	            delta.r[3] = (int)(d_theta[2] * -k[2]); // Elbow (Flipped: + angle = Out/Up)
 
-	        // TRUNCATION: Update nextJ with the actual angle achieved by integer steps
-	        nextJ.t[i] = (double)nextSteps[i] / k[i];
-	    }
+	            // Differential Wrist Logic
+	            double pitch_steps = d_theta[3] * k[3];
+	            double roll_steps  = d_theta[4] * k[4];
 
-	    // Indices 6 and 7 are usually for the gripper or unused
-	    delta.r[6] = 0;
-	    delta.r[7] = 0;
+	            // If Pitch is also inverted, flip the sign of pitch_steps here:
+	            delta.r[4] = (int)(-pitch_steps + roll_steps);
+	            delta.r[5] = (int)(-pitch_steps - roll_steps);
 
 	    return 1;
 }
