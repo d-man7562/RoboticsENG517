@@ -24,13 +24,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	        printf("Safety Error: Target is too close to the base (Self-Collision Risk)!\n");
 	        return 0;
 	    }
-	    double dist_to_target = sqrt(pow(ts.x, 2) + pow(ts.y, 2) + pow(ts.z - 195.072, 2));
 
-	        // 2. Max theoretical reach is a2 + a3 + d5
-	        if (dist_to_target > (h+a+d)) {
-	            printf("Safety Error: Target is physically too far away!\n");
-	            return 0; // Return failure to main.cpp
-	        }
 
 	    double theta1 = atan2(ts.y,ts.x);
 
@@ -226,9 +220,9 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 
 	            // If Pitch is also inverted, flip the sign of pitch_steps here:
 	            delta.r[4] = (int)(pitch_steps + roll_steps);
-	            delta.r[4] = (int)(pitch_steps);
+	           //CHECK IN LAB?? delta.r[4] = (int)(pitch_steps);
 	            delta.r[5] = (int)(-pitch_steps - roll_steps);
-	            delta.r[5] = (int)(-pitch_steps );
+	          //  delta.r[5] = (int)(-pitch_steps );
 
 
 	    return 1;
