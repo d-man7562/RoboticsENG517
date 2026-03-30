@@ -21,7 +21,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 
 	    double theta1 = atan2(ts.y,ts.x);
 
-	    if (theta1 < -(PI/2.0) || theta1 > (PI/2.0)){
+	    if (theta1 < (-1.5708) || theta1 > (1.5708)){
 	    	printf("Theta1 out of bounds: %.2f\n",theta1);
 	    	return 0;
 	    }
@@ -31,7 +31,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 
 	    double theta5 = ts.r * (PI / 180.0);
 
-	    if (theta5 < -(PI/2.0) || theta5 > (PI/2.0)){
+	    if (theta5 < -(1.5708) || theta5 > (1.5708)){
 	     	printf("Theta5 out of bounds: %.2f\n",theta5);
 	    	    	return 0;
 	    }
@@ -48,13 +48,13 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	    double c3 = ((r_sq + pow(wz - h, 2)) / (2.0 * a * a)) - 1.0;
 	    //solve for theta3
 //	    //check correctness in lab
-//	    if (c3 > 1.0) c3 = 1.0;
-//	    else if (c3 < -1.0) c3 = -1.0;
-	    if (c3 > 1.0 || c3 < -1.0) {
-	            printf("Math Error: Target point results in impossible joint geometry.\n");
+
+	    if (c3 > 1.00001 || c3 < -1.00001) {
+	            printf("Math Error: Target point results in impossible joint geometry. C3: %f\n",c3);
 	            return 0;
 	        }
-
+	    if (c3 > 1.0) c3 = 1.0;
+	    if (c3 < -1.0) c3 = -1.0;
 	    double s3 = -sqrt(1.0 - c3 * c3);
 
 	    double theta3 = atan2(s3,c3);
