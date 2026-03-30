@@ -1,5 +1,5 @@
 #include "kinematics.h"
-
+//Users should be able to input desired taskspace coordinates
 
 void testKinematics(Microbot &robot) {
     Jointspace in, o;
@@ -44,7 +44,7 @@ int main() {
     Taskspace currentTask, nextTask;
     Registerspace delta;
     int speed = 235; // Recommended speed from your manual
-    testKinematics(robot);
+//    testKinematics(robot);
     // STEP 1: Initialize at Home (Manual Page 181)
     currentTask.x = 125.0; currentTask.y = 0.0; currentTask.z = 20.0;
     currentTask.p = -90.0; currentTask.r = 0.0;
@@ -58,12 +58,15 @@ int main() {
         printf("Enter target X Y Z P R (Enter 0 0 0 0 0 to quit): ");
         fflush(stdout);
         if (scanf("%lf %lf %lf %lf %lf", &nextTask.x, &nextTask.y, &nextTask.z, &nextTask.p, &nextTask.r) != 5) break;
-        if (nextTask.x == 0) break;
+        if (nextTask.x == 1000) break;
+
 
         // STEP 3: Run IK for the target configuration
         if (robot.InverseKinematics(nextTask, nextJoints) == 0) {
         	printf("Coordinates out of bounds\n");
         	continue;
+
+
         }
 
         // STEP 4: Calculate Steps and Send to Robot
