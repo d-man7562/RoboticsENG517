@@ -210,6 +210,11 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 	        }
 
 	        // APPLY SIGN FLIPS HERE based on your hardware testing:
+
+
+
+
+
 	            delta.r[1] = (int)(d_theta[0] * k[0]);  // Base (Check if left/right is correct)
 	            delta.r[2] = (int)(d_theta[1] * -k[1]); // Shoulder (Flipped: + angle = Up)
 	            delta.r[3] = (int)(d_theta[2] * -k[2]); // Elbow (Flipped: + angle = Out/Up)
@@ -223,8 +228,10 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 	           //CHECK IN LAB?? delta.r[4] = (int)(pitch_steps);
 	            delta.r[5] = (int)(-pitch_steps - roll_steps);
 	          //  delta.r[5] = (int)(-pitch_steps );
-
+	            for (int i=1; i<6;i++){
+	            	printf("Number of steps for joint %d %d\n",i, delta.r[i]);
+	            }
 
 	    return 1;
 }
-
+//330.89 88.661 201.97 -90 90
