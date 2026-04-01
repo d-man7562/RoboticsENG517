@@ -63,17 +63,17 @@ int main() {
 //    testKinematics(robot);
     // STEP 1: Initialize at Home (Manual Page 181)
     currentTask.x = 125.0; currentTask.y = 0.0; currentTask.z = 20.0;
-    currentTask.p = -90.0; currentTask.r = 0.0;
+    currentTask.p = -90.0; currentTask.r = 0.0, currentTask.g = 0.0;
 
     // Convert home position to joints to establish our starting "zero"
     robot.InverseKinematics(currentTask, currentJoints);
 //    manualJointTest(robot,currentJoints);
     while(1) {
         // STEP 2: Prompt User (Use %lf for doubles!)
-        printf("\nCurrent Pos: X:%.1f Y:%.1f Z:%.1f P:%.1f R:%.1f\n", currentTask.x, currentTask.y, currentTask.z,currentTask.p,currentTask.r);
-        printf("Enter target X Y Z P R (Enter 0 0 0 0 0 to quit): ");
+        printf("\nCurrent Pos: X:%.1f Y:%.1f Z:%.1f P:%.1f R:%.1f G:%.1f\n", currentTask.x, currentTask.y, currentTask.z,currentTask.p,currentTask.r,currentTask.g);
+        printf("Enter target X Y Z P R G(Enter 0 0 0 0 0 to quit): ");
         fflush(stdout);
-        if (scanf("%lf %lf %lf %lf %lf", &nextTask.x, &nextTask.y, &nextTask.z, &nextTask.p, &nextTask.r) != 5) break;
+        if (scanf("%lf %lf %lf %lf %lf %lf", &nextTask.x, &nextTask.y, &nextTask.z, &nextTask.p, &nextTask.r, &nextTask.g) != 6) break;
         if (nextTask.x == 1000) break;
 
 

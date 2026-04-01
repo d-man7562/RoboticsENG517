@@ -16,13 +16,14 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	        return 0;
 	    }
 
+	    //this is wrong - use arctan instead
+	    double atan_prod = ts.y/ts.x;
+	    double theta1 = atan(atan_prod);
 
-	    double theta1 = atan2(ts.y,ts.x);
-
-	    if (theta1 < (-1.5708) || theta1 > (1.5708)){
-	    	printf("Theta1 out of bounds: %.2f\n",theta1);
-	    	return 0;
-	    }
+//	    if (theta1 < (-1.5708) || theta1 > (1.5708)){
+//	    	printf("Theta1 out of bounds: %.2f\n",theta1);
+//	    	return 0;
+//	    }
 
 	    double p = ts.p * (PI/180.0);
 	    double theta234 = p + (PI/2.0);
@@ -34,7 +35,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	    	    	return 0;
 	    }
 
-	    double theta6 = ts.g * 0; //fuck
+	    double theta6 = ts.g; //fuck
 	    double c1 = cos(theta1), s1 = sin(theta1);
 	    double c234 = cos(theta234), s234 = sin(theta234);
 	    //wrist
@@ -130,7 +131,7 @@ int Microbot::ForwardKinematics(Jointspace j, Taskspace &t){
 	double t3 = j.t[2];
 	double t4 = j.t[3];
 	double t5 = j.t[4] ;
-
+	double g  = j.t[5];
 //	double d1 = 195.072;//mm, 7.68 inches;  BASE SEGMENT LENGTH
 //	double a2 = 177.8;//mm, 7.0 inches;		LINK 1 LENGTH
 //	double a3 = 177.8; //mm, 7.0 inches; 	LINK 2 LENGTH
@@ -157,7 +158,7 @@ int Microbot::ForwardKinematics(Jointspace j, Taskspace &t){
 	t.z = z;
 	t.p = p;
 	t.r = r;
-	t.g = j.t[5];
+	t.g = g;
 		printf("Inside Forward Kinematics:\n");
 		printf("X: %.2f \n", t.x);
 	    printf("Y: %.2f \n", t.y);
@@ -186,19 +187,19 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 
 	// Step Ratios (steps per revolution -> steps per radian)
 	//matches 1 based indexing
-	    const double k[6] = {
+	    const double k[7] = {
 	    	0,
-	    	7072/(2*PI),
-			7072/(2*PI),// Base
-	        4158/(2*PI), // Shoulder
-	        1536/(2*PI), // Elbow
-			1536/(2*PI), // Right Wrist
-	        // Left Wrist
+	    	7072/(2*PI),// Base  steps/rev to steps/radian
+			7072/(2*PI),// Shoulder
+	        4158/(2*PI), // Elbow
+	        1536/(2*PI), // Right Wrist
+			1536/(2*PI), // Left Wrist
+	        13.2 // Gripper steps/mm
 	    };
 
 	    //find joint angle differences between current and next
-	    double d_theta[6];
-	        for(int i = 1; i < 6; i++) {
+	    double d_theta[7];
+	        for(int i = 1; i <= 6; i++) {
 	            d_theta[i] = nextJ.t[i-1] - currentJ.t[i-1];
 	        }
 
@@ -216,9 +217,9 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 	            delta.r[4] = (int)(pitch_steps);
 //	            delta.r[5] = (int)(-pitch_steps + roll_steps);
 	            delta.r[5] = (int)(roll_steps);
-	            delta.r[6] = delta.r[3];
+	            delta.r[6] = (int)(delta.r[3] + (d_theta[6]*k[6]));
 //	            delta.r[5] = (int)(roll_steps );
-	            for (int i=1; i<6;i++){
+	            for (int i=1; i<7;i++){
 	            	printf("Number of steps for joint %d %d\n",i, delta.r[i]);
 	            }
 
