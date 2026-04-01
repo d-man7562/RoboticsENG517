@@ -15,15 +15,6 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	        printf("Safety Error: Target Z is too low! (Collision Risk): %.2f \n",ts.z);
 	        return 0;
 	    }
-	    // 1. Calculate horizontal distance from center
-	    double dist_2d = sqrt(ts.x * ts.x + ts.y * ts.y);
-
-	    // 2. Minimum Reach Safety Check
-	    // If the target is too close (inside the robot's own body)
-	    if (dist_2d < 100.0 && ts.z < (h + 50)) {
-	        printf("Safety Error: Target is too close to the base (Self-Collision Risk)!\n");
-	        return 0;
-	    }
 
 
 	    double theta1 = atan2(ts.y,ts.x);
@@ -193,41 +184,40 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 	//use that to convert to steps
 
 
-	// Page 189 Step Ratios
-
-	    const double k[5] = {
-	    	1125, // Base
-	        1125, // Shoulder
-	        672, // Elbow
-	        244.4, // Right Wrist
-	        244.4// Left Wrist
+	// Step Ratios (steps per revolution -> steps per radian)
+	//matches 1 based indexing
+	    const double k[6] = {
+	    	0,
+	    	7072/(2*PI),
+			7072/(2*PI),// Base
+	        4158/(2*PI), // Shoulder
+	        1536/(2*PI), // Elbow
+			1536/(2*PI), // Right Wrist
+	        // Left Wrist
 	    };
 
-
-	    double d_theta[5];
-	        for(int i = 0; i < 5; i++) {
-	            d_theta[i] = nextJ.t[i] - currentJ.t[i];
+	    //find joint angle differences between current and next
+	    double d_theta[6];
+	        for(int i = 1; i < 6; i++) {
+	            d_theta[i] = nextJ.t[i-1] - currentJ.t[i-1];
 	        }
 
-	        // APPLY SIGN FLIPS HERE based on your hardware testing:
 
-
-
-
-
-	            delta.r[1] = (int)(d_theta[0] * k[0]);  // Base (Check if left/right is correct)
-	            delta.r[2] = (int)(d_theta[1] * -k[1]); // Shoulder (Flipped: + angle = Up)
-	            delta.r[3] = (int)(d_theta[2] * -k[2]); // Elbow (Flipped: + angle = Out/Up)
+	            delta.r[1] = (int)(d_theta[1] * k[1]);  // Base (Check if left/right is correct)
+	            delta.r[2] = (int)(d_theta[2] * -k[2]); // Shoulder (Flipped: + angle = Up)
+	            delta.r[3] = (int)((d_theta[2] +d_theta[3])*-k[3]); // Elbow (Flipped: + angle = Out/Up)
 
 	            // Differential Wrist Logic
-	            double pitch_steps = d_theta[3] * k[3];
-	            double roll_steps  = d_theta[4] * k[4];
+	            double pitch_steps = (d_theta[4] + d_theta[3]+d_theta[2]-d_theta[5]) * -k[4];
+	            double roll_steps  = (d_theta[4] + d_theta[3] + d_theta[2] + d_theta[5]) * -k[5];
 
 	            // If Pitch is also inverted, flip the sign of pitch_steps here:
-	            delta.r[4] = (int)(pitch_steps + roll_steps);
-	           //CHECK IN LAB?? delta.r[4] = (int)(pitch_steps);
-	            delta.r[5] = (int)(-pitch_steps - roll_steps);
-	          //  delta.r[5] = (int)(-pitch_steps );
+//	            delta.r[4] = (int)-(pitch_steps + roll_steps);
+	            delta.r[4] = (int)(pitch_steps);
+//	            delta.r[5] = (int)(-pitch_steps + roll_steps);
+	            delta.r[5] = (int)(roll_steps);
+	            delta.r[6] = delta.r[3];
+//	            delta.r[5] = (int)(roll_steps );
 	            for (int i=1; i<6;i++){
 	            	printf("Number of steps for joint %d %d\n",i, delta.r[i]);
 	            }
