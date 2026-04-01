@@ -105,7 +105,7 @@ int main() {
         if (scanf("%lf %lf %lf %lf %lf %lf", &nextTask.x, &nextTask.y, &nextTask.z, &nextTask.p, &nextTask.r, &nextTask.g) != 6) break;
         if (nextTask.x == 1000) {
         	goHome(speed,robot, nextTask, delta, currentTask, nextJoints,currentJoints);
-        	printf("\nExit command given. Quitting...\n");
+        	printf("\nExit command provided. Quitting...\n");
         	exit(1);
         }
         if (nextTask.x == 10000)
