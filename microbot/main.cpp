@@ -1,5 +1,34 @@
 #include "kinematics.h"
+void goHome(int speed, Microbot robot, Taskspace &nextTask, Registerspace delta, Taskspace currentTask,Jointspace nextJoints, Jointspace &currentJoints){
 
+				nextTask.x = 125;
+	        	nextTask.y =0;
+	        	nextTask.z =20;
+	        	nextTask.p =-90;
+	        	nextTask.r =0;
+	        	nextTask.g =0;
+
+	        	 // STEP 3: Run IK for the target configuration
+if (robot.InverseKinematics(nextTask, nextJoints) == 0) {
+	 printf("Coordinates out of bounds\n");
+	   exit(1);
+}
+
+	        	        // STEP 4: Calculate Steps and Send to Robot
+robot.MoveTo(nextJoints, currentJoints, delta);
+
+	        	        // Physically move the motors using the calculated delta
+robot.SendStep(speed, delta);
+
+	        	        // STEP 5: Update current state
+	        	        // Use the truncated joint angles (already updated inside MoveTo)
+	        	        // to find the actual taskspace position
+currentJoints = nextJoints;
+robot.ForwardKinematics(currentJoints, currentTask);
+
+printf("Move Complete. Actual X:%.2f Y:%.2f Z:%.2f\n", currentTask.x, currentTask.y, currentTask.z);
+
+}
 void manualJointTest(Microbot &robot, Jointspace &currentJoints) {
 	currentJoints.t[0] = 0 ,currentJoints.t[0] =0 ,currentJoints.t[0] = -90 ,currentJoints.t[0] = 0,currentJoints.t[0] =0;
     Jointspace targetJoints;
@@ -71,12 +100,26 @@ int main() {
     while(1) {
         // STEP 2: Prompt User (Use %lf for doubles!)
         printf("\nCurrent Pos: X:%.1f Y:%.1f Z:%.1f P:%.1f R:%.1f G:%.1f\n", currentTask.x, currentTask.y, currentTask.z,currentTask.p,currentTask.r,currentTask.g);
-        printf("Enter target X Y Z P R G(Enter 0 0 0 0 0 to quit): ");
+        printf("Enter target X Y Z P R G(Enter 1000 to quit, 10000 to return HOME): ");
         fflush(stdout);
         if (scanf("%lf %lf %lf %lf %lf %lf", &nextTask.x, &nextTask.y, &nextTask.z, &nextTask.p, &nextTask.r, &nextTask.g) != 6) break;
-        if (nextTask.x == 1000) break;
+        if (nextTask.x == 1000) {
+        	goHome(speed,robot, nextTask, delta, currentTask, nextJoints,currentJoints);
+        	printf("\nExit command given. Quitting...\n");
+        	exit(1);
+        }
+        if (nextTask.x == 10000)
+        {
+        	nextTask.x = 125;
+        	nextTask.y =0;
+        	nextTask.z =20;
+        	nextTask.p =-90;
+        	nextTask.r =0;
+        	nextTask.g =0;
 
 
+
+        }
         // STEP 3: Run IK for the target configuration
         if (robot.InverseKinematics(nextTask, nextJoints) == 0) {
         	printf("Coordinates out of bounds\n");
