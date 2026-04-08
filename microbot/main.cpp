@@ -100,7 +100,7 @@ int main() {
     while(1) {
         // STEP 2: Prompt User (Use %lf for doubles!)
         printf("\nCurrent Pos: X:%.1f Y:%.1f Z:%.1f P:%.1f R:%.1f G:%.1f\n", currentTask.x, currentTask.y, currentTask.z,currentTask.p,currentTask.r,currentTask.g);
-        printf("Enter target X Y Z P R G(Enter 1000 to quit, 10000 to return HOME): ");
+        printf("Enter target X Y Z P R G(Enter X = 1000, y,z,p,r,g = 0 to quit, X = 10000 to return HOME): ");
         fflush(stdout);
         if (scanf("%lf %lf %lf %lf %lf %lf", &nextTask.x, &nextTask.y, &nextTask.z, &nextTask.p, &nextTask.r, &nextTask.g) != 6) break;
         if (nextTask.x == 1000) {

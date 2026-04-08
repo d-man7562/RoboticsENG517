@@ -11,19 +11,25 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	    const double h = 252; // d1 [cite: 4]
 	    const double a = 178;   // a2 = a3 [cite: 4]
 	    const double d = 80;   // d5 [cite: 4]
-	    if (ts.z < 10.0) { // 10mm safety buffer above the table
+	    if (ts.z < 20.0) { // 10mm safety buffer above the table
 	        printf("Safety Error: Target Z is too low! (Collision Risk): %.2f \n",ts.z);
 	        return 0;
 	    }
 
-	    //this is wrong - use arctan instead
-	    double atan_prod = ts.y/ts.x;
-	    double theta1 = atan(atan_prod);
 
-//	    if (theta1 < (-1.5708) || theta1 > (1.5708)){
-//	    	printf("Theta1 out of bounds: %.2f\n",theta1);
-//	    	return 0;
-//	    }
+	    if ((ts.x == 0 && sin(ts.y) == 0))
+	    {
+	    printf("Divide by zero error\n");
+	    return 0;
+	    }
+	    double atan_prod = ts.y/ts.x;
+
+	    double theta1 = atan(atan_prod);
+//	    double theta1 = atan2(ts.y,ts.x); //dont use this
+	    if (theta1 < (-1.5708) || theta1 > (1.5708)){
+	    	printf("Theta1 out of bounds: %.2f\n",theta1);
+	    	return 0;
+	    }
 
 	    double p = ts.p * (PI/180.0);
 	    double theta234 = p + (PI/2.0);
@@ -35,7 +41,7 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 	    	    	return 0;
 	    }
 
-	    double theta6 = ts.g; //fuck
+	    double theta6 = ts.g;
 	    double c1 = cos(theta1), s1 = sin(theta1);
 	    double c234 = cos(theta234), s234 = sin(theta234);
 	    //wrist
