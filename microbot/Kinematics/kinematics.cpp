@@ -241,7 +241,7 @@ bool Microbot::LineTo(Taskspace &fnal, Taskspace &current, Jointspace &currentJ,
 	Registerspace delta;
 	Microbot robot;
 	std::vector<Jointspace> pathBuffer;
-	double dx = fnal.x - current.x;
+		double dx = fnal.x - current.x;
 	    double dy = fnal.y - current.y;
 	    double dz = fnal.z - current.z;
 	    double distance = sqrt(dx*dx + dy*dy + dz*dz);
