@@ -247,7 +247,7 @@ bool Microbot::LineTo(Taskspace &fnal, Taskspace &current, Jointspace &currentJ,
 	    double distance = sqrt(dx*dx + dy*dy + dz*dz);
 	    printf("distance:%f\n",distance);
 	    // Aim for one IK solution every 5mm for a smoother line
-	    int numhops = (int)(distance / 10.0)
+	    int numhops = (int)(distance / 10.0);
 	    if (numhops < 5) numhops = 5;
 
 	    for (int step = 1; step <= numhops; step++) {
