@@ -120,24 +120,19 @@ int main() {
 
 
         }
-        // STEP 3: Run IK for the target configuration
-        if (robot.InverseKinematics(nextTask, nextJoints) == 0) {
-        	printf("Coordinates out of bounds\n");
-        	continue;
+        robot.LineTo(nextTask, currentTask, currentJoints,speed);
+//        // STEP 3: Run IK for the target configuration
+//        if (robot.InverseKinematics(nextTask, nextJoints) == 0) {
+//        	printf("Coordinates out of bounds\n");
+//        	continue;
+//    }
+//        // STEP 4: Calculate Steps and Send to Robot
+//        robot.MoveTo(nextJoints, currentJoints, delta);
+//
+//        // Physically move the motors using the calculated delta
+//        robot.SendStep(speed, delta);
 
-
-        }
-
-        // STEP 4: Calculate Steps and Send to Robot
-        robot.MoveTo(nextJoints, currentJoints, delta);
-
-        // Physically move the motors using the calculated delta
-        robot.SendStep(speed, delta);
-
-        // STEP 5: Update current state
-        // Use the truncated joint angles (already updated inside MoveTo)
-        // to find the actual taskspace position
-        currentJoints = nextJoints;
+//        currentJoints = nextJoints;
         robot.ForwardKinematics(currentJoints, currentTask);
 
         printf("Move Complete. Actual X:%.2f Y:%.2f Z:%.2f\n", currentTask.x, currentTask.y, currentTask.z);

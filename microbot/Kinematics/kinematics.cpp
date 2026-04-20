@@ -102,7 +102,11 @@ int Microbot::InverseKinematics(Taskspace ts, Jointspace &js){
 		   	     	printf("Theta2 out of bounds: %.2f\n",theta2);
 		   	    	    	return 0;
 		   	    }
-
+	    double elbow_z = h + a * sin(theta2);
+	    if (elbow_z < 15.0) { // Safety floor for the elbow joint
+	        printf("Safety Error: Elbow will hit the table! Z: %.2f\n", elbow_z);
+	        return 0;
+	    }
 
 	    //solve for theta4
 	    double theta4 = theta234-theta2-theta3;
@@ -230,5 +234,46 @@ int Microbot::MoveTo(Jointspace nextJ,Jointspace &currentJ, Registerspace &delta
 	            }
 
 	    return 1;
+}
+#include <vector>
+bool Microbot::LineTo(Taskspace &fnal, Taskspace &current, Jointspace &currentJ,int speed){
+	Jointspace nextJs;
+	Registerspace delta;
+	Microbot robot;
+	std::vector<Jointspace> pathBuffer;
+	double dx = fnal.x - current.x;
+	    double dy = fnal.y - current.y;
+	    double dz = fnal.z - current.z;
+	    double distance = sqrt(dx*dx + dy*dy + dz*dz);
+	    printf("distance:%f\n",distance);
+	    // Aim for one IK solution every 5mm for a smoother line
+	    int numhops = (int)(distance / 10.0)
+	    if (numhops < 5) numhops = 5;
+
+	    for (int step = 1; step <= numhops; step++) {
+	        double s = (double)step / numhops;
+
+	        Taskspace nextstep;
+	        nextstep.x = current.x + (dx * s);
+	        nextstep.y = current.y + (dy * s);
+	        nextstep.z = current.z + (dz * s);
+	        nextstep.p = current.p + ((fnal.p - current.p) * s);
+	        nextstep.r = current.r + ((fnal.r - current.r) * s);
+	        nextstep.g = current.g + ((fnal.g - current.g) * s);
+
+	        // 1. Solve Inverse Kinematics for this intermediate point
+	        if (InverseKinematics(nextstep,nextJs) !=1){
+	        printf("IK Failed at step %d\n",step);
+	        return false;
+	        }
+	        pathBuffer.push_back(nextJs);
+	    }
+	    for (const auto item : pathBuffer){
+	        if (this->MoveTo(item, currentJ, delta) ==1){
+	        	this->SendStep(speed, delta);
+	       currentJ= item;
+	        }
+	}
+return true;
 }
 //330.89 88.661 201.97 -90 90

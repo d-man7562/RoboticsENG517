@@ -68,7 +68,7 @@ public:
 	int InverseKinematics(Taskspace t, Jointspace &j);
 	int ForwardKinematics(Jointspace j, Taskspace &t);
 	int MoveTo(Jointspace nextJ, Jointspace &currentJ, Registerspace &delta);
-	
+	bool LineTo(Taskspace &fnal, Taskspace &current, Jointspace &currentJ,int speed);
 	// written in interface.cpp
 	int SendStep(int speed, Registerspace delta);
 	int SendClose(int speed, int force);
